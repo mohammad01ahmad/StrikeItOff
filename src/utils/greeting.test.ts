@@ -1,3 +1,4 @@
+// Unit tests — pure functions with no dependencies or side effects; input/output only.
 import { formatToday, getGreeting } from './greeting';
 
 describe('formatToday', () => {

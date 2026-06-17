@@ -1,3 +1,4 @@
+// Integration tests — renders AuthProvider + consumer together; mocks only external boundaries (Supabase, Google Sign-In) to verify the full auth flow across the context and React tree.
 import { Text, Pressable } from 'react-native';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { AuthProvider, useAuth } from './authContext';

@@ -1,28 +1,21 @@
-import { useState } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/authContext';
-import { MOCK_TASKS } from '../../data/mockTasks';
 import { Task } from '../../types/task';
 import TaskCard from '../../components/TaskCard';
 import { formatToday, getGreeting } from '../../utils/greeting';
 
 const TAB_BAR_HEIGHT = 80;
 
-export default function TodayScreen() {
+interface TodayScreenProps {
+    tasks: Task[];
+    onComplete: (id: string) => void;
+}
+
+export default function TodayScreen({ tasks, onComplete }: TodayScreenProps) {
     const { session } = useAuth();
     const firstName = session?.user.user_metadata?.first_name || 'there';
-    const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
-
     const remaining = tasks.filter((t) => !t.completed).length;
-
-    const handleComplete = (id: string) => {
-        setTasks((prev) => {
-            const task = prev.find((t) => t.id === id);
-            if (!task) return prev;
-            return [...prev.filter((t) => t.id !== id), { ...task, completed: true }];
-        });
-    };
 
     return (
         <ScrollView
@@ -72,7 +65,7 @@ export default function TodayScreen() {
                     </View>
                 )}
                 {tasks.map((task) => (
-                    <TaskCard key={task.id} task={task} onComplete={handleComplete} />
+                    <TaskCard key={task.id} task={task} onComplete={onComplete} />
                 ))}
             </View>
         </ScrollView>
