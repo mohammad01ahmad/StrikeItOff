@@ -25,17 +25,26 @@ export default function OnboardingScreen() {
             if (!user) throw new Error('No active session found.');
             const now = new Date().toISOString();
 
-            // 1. Update existing users row (row created automatically on sign-up via trigger)
-            const { error: dbError } = await supabase
+            // 1. Persist the profile. Upsert (not update) so it works whether or not the
+            //    sign-up trigger already created the row; .select() makes RLS/permission
+            //    failures throw instead of silently matching 0 rows.
+            const { data: savedRow, error: dbError } = await supabase
                 .from('users')
-                .update({
+                .upsert({
+                    id: user.id,
+                    email: user.email,
                     first_name: firstName.trim(),
                     last_name: lastName.trim(),
                     onboarded: true,
                     updated_at: now,
                 })
-                .eq('id', user.id);
+                .select()
+                .single();
+            console.log('[onboarding] saved row:', savedRow, 'dbError:', dbError);
             if (dbError) throw dbError;
+            if (!savedRow?.onboarded) {
+                throw new Error('Profile did not persist — no row was written (check the users table / RLS policies).');
+            }
 
             // 2. Write to auth metadata for dashboard greeting
             const { error: metaError } = await supabase.auth.updateUser({

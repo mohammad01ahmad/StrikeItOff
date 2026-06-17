@@ -64,7 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, currentSession) => {
             setSession(currentSession);
-            setCheckingOnboardStatus(true);
+            // Re-check onboard status in the background; don't blank the screen with the
+            // loading gate on every auth event (e.g. the USER_UPDATED fired by updateUser).
             checkOnboardStatus(currentSession);
         });
 
