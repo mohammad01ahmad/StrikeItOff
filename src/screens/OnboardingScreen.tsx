@@ -1,65 +1,87 @@
 import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../context/authContext';
 
-interface OnboardingScreenProps {
-    onComplete: () => void;
-}
+type ScreenState = 'form' | 'success' | 'error';
 
-export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
+export default function OnboardingScreen() {
+    const { markOnboarded } = useAuth();
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [loading, setLoading] = useState(false);
+    const [screenState, setScreenState] = useState<ScreenState>('form');
 
     const handleSaveProfile = async () => {
         if (!firstName.trim() || !lastName.trim()) {
-            Alert.alert('Missing fields', 'Please enter both first name and last name');
+            Alert.alert('Missing fields', 'Please enter both First name and Last name');
             return;
         }
 
         try {
             setLoading(true);
 
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
+            const { data: { user }, } = await supabase.auth.getUser();
             if (!user) throw new Error('No active session found.');
+            const now = new Date().toISOString();
 
-            // 1. Try to upsert to 'profiles' table if it exists
-            try {
-                const { error: dbError } = await supabase.from('profiles').upsert({
-                    id: user.id,
+            // 1. Update existing users row (row created automatically on sign-up via trigger)
+            const { error: dbError } = await supabase
+                .from('users')
+                .update({
                     first_name: firstName.trim(),
                     last_name: lastName.trim(),
-                    updated_at: new Date().toISOString(),
-                });
-                if (dbError) {
-                    console.warn(
-                        'Database profiles update failed, falling back to metadata:',
-                        dbError.message
-                    );
-                }
-            } catch (err: any) {
-                console.warn('Failed database write. Falling back to metadata.', err.message ?? err);
-            }
+                    onboarded: true,
+                    updated_at: now,
+                })
+                .eq('id', user.id);
+            if (dbError) throw dbError;
 
-            // 2. Write details to auth metadata so user state is updated
+            // 2. Write to auth metadata for dashboard greeting
             const { error: metaError } = await supabase.auth.updateUser({
                 data: {
                     first_name: firstName.trim(),
                     last_name: lastName.trim(),
                 },
             });
-
             if (metaError) throw metaError;
 
-            onComplete();
+            setScreenState('success');
+            setTimeout(() => markOnboarded(), 1500);
         } catch (err: any) {
-            Alert.alert('Profile save failed', err.message ?? 'Something went wrong');
+            console.error("Onboarding error:", err);
+            setScreenState('error');
+            setTimeout(() => setScreenState('form'), 2000);
         } finally {
             setLoading(false);
         }
     };
+
+    if (screenState === 'success') {
+        return (
+            <View className="flex-1 items-center justify-center bg-surface px-6">
+                <Text className="font-manrope-semibold text-[32px] leading-10 tracking-[-0.02em] text-primary">
+                    You{"'"}re all set!
+                </Text>
+                <Text className="mt-2 font-manrope text-base leading-6 text-on-surface-variant">
+                    Welcome, {firstName}.
+                </Text>
+            </View>
+        );
+    }
+
+    if (screenState === 'error') {
+        return (
+            <View className="flex-1 items-center justify-center bg-surface px-6">
+                <Text className="font-manrope-semibold text-[24px] leading-8 text-primary">
+                    Something went wrong
+                </Text>
+                <Text className="mt-2 font-manrope text-base leading-6 text-on-surface-variant">
+                    Please try again.
+                </Text>
+            </View>
+        );
+    }
 
     return (
         <View className="flex-1 justify-center bg-surface px-6">

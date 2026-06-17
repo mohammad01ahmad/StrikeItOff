@@ -1,69 +1,17 @@
-import { useState, useEffect } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Alert, Linking } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
-import * as QueryParams from 'expo-auth-session/build/QueryParams';
-import { makeRedirectUri } from 'expo-auth-session';
+import { useState } from 'react';
+import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
-import { supabase } from '../../lib/supabase';
-
-WebBrowser.maybeCompleteAuthSession();
-
-const redirectTo = makeRedirectUri();
-
-//
-async function createSessionFromUrl(url: string) {
-    // Extract parameters from the hash fragment (#) instead of the search query (?)
-    // Supabase sends tokens after a '#' sign
-
-    const { params, errorCode } = QueryParams.getQueryParams(url);
-    if (errorCode) throw new Error(errorCode);
-
-    const { access_token, refresh_token } = params;
-    if (!access_token) return null;
-
-    const { data, error } = await supabase.auth.setSession({
-        access_token,
-        refresh_token,
-    });
-    if (error) throw error;
-    return data.session;
-}
+import { useAuth } from '../context/authContext';
 
 export default function SignUpScreen() {
     const [loading, setLoading] = useState(false);
-
-    // FIX 2: Listen for deep links to handle the return from Safari
-    useEffect(() => {
-        const subscription = Linking.addEventListener('url', async ({ url }) => {
-            if (url.includes('access_token')) {
-                try {
-                    setLoading(true);
-                    await createSessionFromUrl(url);
-                } catch (err: any) {
-                    Alert.alert('Session recovery failed', err.message);
-                } finally {
-                    setLoading(false);
-                }
-            }
-        });
-
-        return () => subscription.remove();
-    }, []);
+    const { signInWithGoogle } = useAuth();
 
     const handleGoogleSignUp = async () => {
         try {
             setLoading(true);
-
-            const { data, error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo,
-                    skipBrowserRedirect: true,
-                },
-            });
-            if (error) throw error;
-
-            await WebBrowser.openBrowserAsync(data.url);
+            await signInWithGoogle();
+            // App.tsx's onAuthStateChange listener picks up the new session automatically
         } catch (err: any) {
             Alert.alert('Sign up failed', err.message ?? 'Something went wrong');
         } finally {

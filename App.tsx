@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import {
   Manrope_400Regular,
@@ -7,88 +6,24 @@ import {
 } from '@expo-google-fonts/manrope';
 import { JetBrainsMono_500Medium } from '@expo-google-fonts/jetbrains-mono';
 import { ActivityIndicator, View, Text, Pressable, Alert } from 'react-native';
-import { Session } from '@supabase/supabase-js';
-import { supabase } from './lib/supabase';
 import SignUpScreen from './src/screens/SignUpScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
+import { AuthProvider, useAuth } from './src/context/authContext';
 import './global.css';
 
-export default function App() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [isOnboarded, setIsOnboarded] = useState<boolean>(false);
-  const [checkingOnboardStatus, setCheckingOnboardStatus] = useState<boolean>(true);
-
-  const [fontsLoaded] = useFonts({
-    'Manrope-Regular': Manrope_400Regular,
-    'Manrope-Medium': Manrope_500Medium,
-    'Manrope-SemiBold': Manrope_600SemiBold,
-    'JetBrainsMono-Medium': JetBrainsMono_500Medium,
-  });
-
-  const checkOnboardStatus = async (userSession: Session | null) => {
-    if (!userSession?.user) {
-      setIsOnboarded(false);
-      setCheckingOnboardStatus(false);
-      return;
-    }
-
-    try {
-      // 1. Check metadata first
-      const metadata = userSession.user.user_metadata;
-      if (metadata?.first_name && metadata?.last_name) {
-        setIsOnboarded(true);
-        setCheckingOnboardStatus(false);
-        return;
-      }
-
-      // 2. Check profiles table
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('first_name, last_name')
-        .eq('id', userSession.user.id)
-        .maybeSingle();
-
-      if (!error && data?.first_name && data?.last_name) {
-        setIsOnboarded(true);
-      } else {
-        setIsOnboarded(false);
-      }
-    } catch (err) {
-      console.warn('Error fetching onboarding profile:', err);
-      setIsOnboarded(false);
-    } finally {
-      setCheckingOnboardStatus(false);
-    }
-  };
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      checkOnboardStatus(currentSession);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
-      setSession(currentSession);
-      checkOnboardStatus(currentSession);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+// Consumes auth state from AuthProvider and renders the correct screen for the session.
+function RootNavigator() {
+  const { session, initializing, isOnboarded, checkingOnboardStatus, signOut } = useAuth();
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      await signOut();
+    } catch (error: any) {
       Alert.alert('Error signing out', error.message);
     }
   };
 
-  const showLoading = !fontsLoaded || (session !== null && checkingOnboardStatus);
-
-  if (showLoading) {
+  if (initializing || (session !== null && checkingOnboardStatus)) {
     return (
       <View className="flex-1 items-center justify-center bg-surface">
         <ActivityIndicator size="large" color="#181512" />
@@ -103,7 +38,7 @@ export default function App() {
 
   // 2. User logged in but profile incomplete
   if (!isOnboarded) {
-    return <OnboardingScreen onComplete={() => setIsOnboarded(true)} />;
+    return <OnboardingScreen />;
   }
 
   // 3. User logged in and onboarded - Dashboard
@@ -124,5 +59,28 @@ export default function App() {
         <Text className="font-manrope-medium text-base text-primary">Sign Out</Text>
       </Pressable>
     </View>
+  );
+}
+
+export default function App() {
+  const [fontsLoaded] = useFonts({
+    'Manrope-Regular': Manrope_400Regular,
+    'Manrope-Medium': Manrope_500Medium,
+    'Manrope-SemiBold': Manrope_600SemiBold,
+    'JetBrainsMono-Medium': JetBrainsMono_500Medium,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View className="flex-1 items-center justify-center bg-surface">
+        <ActivityIndicator size="large" color="#181512" />
+      </View>
+    );
+  }
+
+  return (
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
   );
 }

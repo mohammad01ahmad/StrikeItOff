@@ -9,7 +9,16 @@
     "experiments": {
       "tsconfigPaths": true
     },
-    "plugins": ["expo-web-browser", "expo-font"],
+    "scheme": "strikeitoff",
+    "plugins": [
+      "expo-font",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.786358084803-f38kmarfrmqu3qea3end84kvli543ne1"
+        }
+      ]
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,14 +27,31 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.strikeitoff.app",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.786358084803-f38kmarfrmqu3qea3end84kvli543ne1"
+            ]
+          }
+        ]
+      }
     },
     "android": {
+      "package": "com.strikeitoff.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5f0bc755-ee28-4079-9a4e-bfb2b1e21a88"
       }
     }
   }
