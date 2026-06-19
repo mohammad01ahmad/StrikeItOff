@@ -10,7 +10,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import SignUpScreen from './src/screens/SignUpScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
-import { AuthProvider, useAuth } from './src/context/authContext';
+import { AuthProvider, useAuth } from './src/context/authContext/authContext';
 import './global.css';
 
 function RootNavigator() {
