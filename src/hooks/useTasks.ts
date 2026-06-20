@@ -9,8 +9,9 @@ import {
 } from '../api/tasks';
 import { useAuth } from '../context/authContext/authContext';
 
-// File: Contains all the functions for task CRUD
-// Functions take reference from @src/api/tasks
+// file: The functions in this use the API functions from ./api/tasks
+// No business logic is in this file 
+// this file is just for having CRUD functions with state
 
 export function useTasks(): UseTasksResult {
   const { session } = useAuth();
@@ -19,14 +20,13 @@ export function useTasks(): UseTasksResult {
   const [error, setError] = useState<string | null>(null);
 
   const loadTasks = useCallback(async () => {
-    try {
-      const data = await fetchTasks();
-      setTasks(data);
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to load tasks.');
-    } finally {
-      setLoading(false);
+    const response = await fetchTasks();
+    if (response.status === 'error') {
+      setError(response.message);
+    } else if (response.data) {
+      setTasks(response.data);
     }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -37,18 +37,26 @@ export function useTasks(): UseTasksResult {
 
   const addTask = async (input: TaskInput) => {
     if (!session?.user.id) return;
-    const task = await apiAddTask(session.user.id, input);
-    setTasks((prev) => [task, ...prev]);
+    const response = await apiAddTask(session.user.id, input);
+    if (response.status === 'error') {
+      setError(response.message);
+      return;
+    }
+    if (response.data) {
+      setTasks((prev) => [response.data!, ...prev]);
+    }
   };
 
   const completeTask = async (id: string) => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: true } : t)));
-    try {
-      const updated = await apiCompleteTask(id);
-      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to complete task.');
+    const response = await apiCompleteTask(id);
+    if (response.status === 'error') {
+      setError(response.message);
       await loadTasks();
+      return;
+    }
+    if (response.data) {
+      setTasks((prev) => prev.map((t) => (t.id === id ? response.data! : t)));
     }
   };
 
@@ -57,32 +65,27 @@ export function useTasks(): UseTasksResult {
     setTasks((prev) =>
       prev.map((t) =>
         t.id === id
-          ? {
-              ...t,
-              name: input.name,
-              priority: input.priority,
-              isDaily: input.isDaily,
-              time: input.time,
-            }
+          ? { ...t, name: input.name, priority: input.priority, isDaily: input.isDaily, time: input.time }
           : t
       )
     );
-    try {
-      const updated = await apiUpdateTask(id, input);
-      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to update task.');
+    const response = await apiUpdateTask(id, input);
+    if (response.status === 'error') {
+      setError(response.message);
       if (snapshot) setTasks((prev) => prev.map((t) => (t.id === id ? snapshot : t)));
+      return;
+    }
+    if (response.data) {
+      setTasks((prev) => prev.map((t) => (t.id === id ? response.data! : t)));
     }
   };
 
   const deleteTask = async (id: string) => {
     const snapshot = tasks.find((t) => t.id === id);
     setTasks((prev) => prev.filter((t) => t.id !== id));
-    try {
-      await apiDeleteTask(id);
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to delete task.');
+    const response = await apiDeleteTask(id);
+    if (response.status === 'error') {
+      setError(response.message);
       if (snapshot) setTasks((prev) => [snapshot, ...prev]);
     }
   };
