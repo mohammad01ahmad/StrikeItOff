@@ -45,7 +45,6 @@ export default function OnboardingScreen() {
         })
         .select()
         .single();
-      console.log('[onboarding] saved row:', savedRow, 'dbError:', dbError);
       if (dbError) throw dbError;
       if (!savedRow?.onboarded) {
         throw new Error(

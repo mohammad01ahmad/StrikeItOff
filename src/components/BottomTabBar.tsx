@@ -38,7 +38,7 @@ export default function BottomTabBar({ activeTab, onTabPress }: BottomTabBarProp
         borderTopColor: '#cfc4bd',
         paddingBottom: insets.bottom,
       }}>
-      <View className="flex-row items-center justify-around px-6 pb-1 pt-3">
+      <View className="flex-row items-center justify-around px-6 pt-3">
         {TABS.map((tab) => {
           const active = activeTab === tab.name;
           return (

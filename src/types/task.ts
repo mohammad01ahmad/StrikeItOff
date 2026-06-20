@@ -18,6 +18,13 @@ export interface TaskInput {
   time?: string;
 }
 
+// Prop that will be used in AddTaskSheet component
+export interface AddTaskSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  onAddTask: (input: TaskInput) => Promise<void>;
+}
+
 // Represents a row in the tasks table in Supabase
 export interface TaskRow {
   id: string;
@@ -46,4 +53,6 @@ export interface UseTasksResult {
   error: string | null;
   addTask: (input: TaskInput) => Promise<void>;
   completeTask: (id: string) => Promise<void>;
+  updateTask: (id: string, input: TaskInput) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
 }

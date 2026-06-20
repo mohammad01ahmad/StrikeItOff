@@ -66,3 +66,26 @@ export async function completeTask(id: string): Promise<Task> {
   if (error) throw error;
   return rowToTask(data as TaskRow, now);
 }
+
+export async function updateTask(id: string, input: TaskInput): Promise<Task> {
+  const now = new Date();
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({
+      name: input.name.trim(),
+      priority: input.priority ?? null,
+      is_daily: input.isDaily,
+      time: input.time?.trim() || null,
+      updated_at: now.toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return rowToTask(data as TaskRow);
+}
+
+export async function deleteTask(id: string): Promise<void> {
+  const { error } = await supabase.from('tasks').delete().eq('id', id);
+  if (error) throw error;
+}

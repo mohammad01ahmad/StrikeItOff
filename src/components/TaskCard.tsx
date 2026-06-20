@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, Text, AccessibilityInfo, LayoutChangeEvent } from 'react-native';
+import { View, Text, Alert, AccessibilityInfo, LayoutChangeEvent, Pressable } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
+import { Feather } from '@expo/vector-icons';
 import { Task, Priority } from '../types/task';
 
 const PRIORITY_COLORS: Record<Priority, string> = {
@@ -22,16 +23,36 @@ const THRESHOLD_RATIO = 0.45;
 interface TaskCardProps {
   task: Task;
   onComplete: (id: string) => Promise<void>;
+  onEdit: (task: Task) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
-function CompletedCard({ task }: { task: Task }) {
+function CompletedCard({
+  task,
+  onDelete,
+}: {
+  task: Task;
+  onDelete: (id: string) => Promise<void>;
+}) {
+  const handleDeletePress = () => {
+    Alert.alert('Delete Task', `Are you sure you want to delete "${task.name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => onDelete(task.id) },
+    ]);
+  };
+
   return (
     <View className="mb-3 rounded-xl border border-outline-variant bg-surface-container-low px-4 py-4 opacity-40">
-      <Text
-        className="font-manrope text-base leading-6 text-outline"
-        style={{ textDecorationLine: 'line-through' }}>
-        {task.name}
-      </Text>
+      <View className="flex-row items-center">
+        <Text
+          className="flex-1 font-manrope text-base leading-6 text-outline"
+          style={{ textDecorationLine: 'line-through' }}>
+          {task.name}
+        </Text>
+        <Pressable onPress={handleDeletePress} hitSlop={8} className="ml-3 p-1">
+          <Feather name="trash-2" size={17} color="#7e756f" />
+        </Pressable>
+      </View>
       <View className="mt-2 flex-row items-center gap-3">
         {task.priority && (
           <View className="flex-row items-center gap-1">
@@ -59,7 +80,7 @@ function CompletedCard({ task }: { task: Task }) {
   );
 }
 
-export default function TaskCard({ task, onComplete }: TaskCardProps) {
+export default function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCardProps) {
   const translateX = useSharedValue(0);
   const strikeScale = useSharedValue(0);
   const cardHeight = useSharedValue<number | undefined>(undefined);
@@ -92,7 +113,7 @@ export default function TaskCard({ task, onComplete }: TaskCardProps) {
   }));
 
   if (task.completed) {
-    return <CompletedCard task={task} />;
+    return <CompletedCard task={task} onDelete={onDelete} />;
   }
 
   const triggerHaptic = () => {
@@ -110,6 +131,13 @@ export default function TaskCard({ task, onComplete }: TaskCardProps) {
   const completeInstant = (id: string) => {
     'worklet';
     runOnJS(onComplete)(id);
+  };
+
+  const handleDeletePress = () => {
+    Alert.alert('Delete Task', `Are you sure you want to delete "${task.name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => onDelete(task.id) },
+    ]);
   };
 
   const pan = Gesture.Pan()
@@ -138,6 +166,13 @@ export default function TaskCard({ task, onComplete }: TaskCardProps) {
       }
     });
 
+  // trashTap must be created before cardTap so cardTap can reference it
+  const trashTap = Gesture.Tap().onEnd(() => runOnJS(handleDeletePress)());
+  const cardTap = Gesture.Tap()
+    .requireExternalGestureToFail(trashTap)
+    .onEnd(() => runOnJS(onEdit)(task));
+  const composed = Gesture.Race(pan, cardTap);
+
   const onLayout = (e: LayoutChangeEvent) => {
     cardWidth.value = e.nativeEvent.layout.width;
     if (cardHeight.value === undefined) {
@@ -147,29 +182,36 @@ export default function TaskCard({ task, onComplete }: TaskCardProps) {
 
   return (
     <Animated.View style={wrapperStyle} onLayout={onLayout}>
-      <GestureDetector gesture={pan}>
+      <GestureDetector gesture={composed}>
         <Animated.View
           style={rowStyle}
           className="mb-3 rounded-xl border border-outline-variant bg-surface-container-low px-4 py-4">
-          {/* Name + strike overlay */}
-          <View className="relative">
-            <Text className="font-manrope text-base leading-6 text-primary">{task.name}</Text>
-            {/* Ink strike line — scaleX from left origin */}
-            <Animated.View
-              style={[
-                {
-                  position: 'absolute',
-                  top: 11,
-                  left: 0,
-                  right: 0,
-                  height: 2,
-                  backgroundColor: '#181512',
-                  borderRadius: 1,
-                  transformOrigin: 'left',
-                },
-                strikeStyle,
-              ]}
-            />
+          {/* Name row + trash icon */}
+          <View className="flex-row items-center">
+            <View className="relative flex-1">
+              <Text className="font-manrope text-base leading-6 text-primary">{task.name}</Text>
+              {/* Ink strike line — scaleX from left origin */}
+              <Animated.View
+                style={[
+                  {
+                    position: 'absolute',
+                    top: 11,
+                    left: 0,
+                    right: 0,
+                    height: 2,
+                    backgroundColor: '#181512',
+                    borderRadius: 1,
+                    transformOrigin: 'left',
+                  },
+                  strikeStyle,
+                ]}
+              />
+            </View>
+            <GestureDetector gesture={trashTap}>
+              <Animated.View className="ml-3 p-1">
+                <Feather name="trash-2" size={17} color="#7e756f" />
+              </Animated.View>
+            </GestureDetector>
           </View>
 
           {/* Meta row */}

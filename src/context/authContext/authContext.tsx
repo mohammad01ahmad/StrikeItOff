@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // function: to check if the user is onboarded or not
   const checkOnboardStatus = async (userSession: Session | null) => {
     if (!userSession?.user) {
       setIsOnboarded(false);
@@ -49,10 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // useEffect: to configure the google sign in service
   useEffect(() => {
     GoogleSigninService.configure();
   }, []);
 
+  // useEffect: to get the session and check the onboard status
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
@@ -60,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setInitializing(false);
     });
 
+    // subscribe to auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, currentSession) => {

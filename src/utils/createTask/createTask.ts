@@ -1,4 +1,4 @@
-import { Priority, TaskInput, CreateTaskArgs } from '../../types/task';
+import { TaskInput, CreateTaskArgs } from '../../types/task';
 
 export function createTask({ name, priority, isDaily = false, time }: CreateTaskArgs): TaskInput {
   return {

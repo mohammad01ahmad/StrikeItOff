@@ -10,9 +10,11 @@ const TAB_BAR_HEIGHT = 80;
 interface TodayScreenProps {
   tasks: Task[];
   onComplete: (id: string) => Promise<void>;
+  onEdit: (task: Task) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
-export default function TodayScreen({ tasks, onComplete }: TodayScreenProps) {
+export default function TodayScreen({ tasks, onComplete, onEdit, onDelete }: TodayScreenProps) {
   const { session } = useAuth();
   const firstName = session?.user.user_metadata?.first_name || 'there';
   const remaining = tasks.filter((t) => !t.completed).length;
@@ -65,7 +67,13 @@ export default function TodayScreen({ tasks, onComplete }: TodayScreenProps) {
           </View>
         )}
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} onComplete={onComplete} />
+          <TaskCard
+            key={task.id}
+            task={task}
+            onComplete={onComplete}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
         ))}
       </View>
     </ScrollView>
