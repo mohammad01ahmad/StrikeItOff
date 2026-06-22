@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { View, Text, Pressable, Alert } from 'react-native';
 import { useAuth } from '../../context/authContext/authContext';
+import EditProfileSheet from '../../components/EditProfileSheet/EditProfileSheet';
 
 export default function ProfileScreen() {
   const { session, signOut } = useAuth();
-  const firstName = session?.user.user_metadata?.first_name;
-  const lastName = session?.user.user_metadata?.last_name;
+  const firstName = session?.user.user_metadata?.first_name ?? '';
+  const lastName = session?.user.user_metadata?.last_name ?? '';
   const email = session?.user.email;
+  const [editVisible, setEditVisible] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -26,10 +29,23 @@ export default function ProfileScreen() {
       {email && <Text className="mt-1 font-manrope text-base leading-6 text-outline">{email}</Text>}
 
       <Pressable
+        onPress={() => setEditVisible(true)}
+        className="mt-5 rounded border border-surface-dim bg-transparent px-6 py-1 active:opacity-75">
+        <Text className="text-center font-manrope-medium text-base text-primary">Edit Profile</Text>
+      </Pressable>
+
+      <Pressable
         onPress={handleSignOut}
         className="mt-10 rounded border border-surface-dim bg-transparent px-6 py-3 active:opacity-75">
         <Text className="text-center font-manrope-medium text-base text-primary">Sign out</Text>
       </Pressable>
+
+      <EditProfileSheet
+        visible={editVisible}
+        onClose={() => setEditVisible(false)}
+        firstName={firstName}
+        lastName={lastName}
+      />
     </View>
   );
 }

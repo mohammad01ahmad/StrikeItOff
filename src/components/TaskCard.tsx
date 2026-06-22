@@ -27,13 +27,7 @@ interface TaskCardProps {
   onDelete: (id: string) => Promise<void>;
 }
 
-function CompletedCard({
-  task,
-  onDelete,
-}: {
-  task: Task;
-  onDelete: (id: string) => Promise<void>;
-}) {
+function CompletedCard({ task, onDelete, }: { task: Task; onDelete: (id: string) => Promise<void>; }) {
   const handleDeletePress = () => {
     Alert.alert('Delete Task', `Are you sure you want to delete "${task.name}"?`, [
       { text: 'Cancel', style: 'cancel' },
