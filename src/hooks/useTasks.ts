@@ -6,7 +6,7 @@ import {
   completeTask as apiCompleteTask,
   updateTask as apiUpdateTask,
   deleteTask as apiDeleteTask,
-} from '../api/tasks';
+} from '../api/tasks/tasks';
 import { useAuth } from '../context/authContext/authContext';
 
 // file: The functions in this use the API functions from ./api/tasks

@@ -1,5 +1,5 @@
-import { supabase } from '../../lib/supabase';
-import { ApiResponse, successResponse, errorResponse } from '../utils/apiResponse/apiResponse';
+import { supabase } from '../../../lib/supabase';
+import { ApiResponse, successResponse, errorResponse } from '../../utils/apiResponse/apiResponse';
 
 export async function updateProfile(firstName: string, lastName: string): Promise<ApiResponse<undefined>> {
   try {

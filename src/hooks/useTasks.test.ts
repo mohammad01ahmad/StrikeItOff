@@ -4,7 +4,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { useTasks } from './useTasks';
 import { useAuth } from '../context/authContext/authContext';
-import * as tasksApi from '../api/tasks';
+import * as tasksApi from '../api/tasks/tasks';
 
 jest.mock('../context/authContext/authContext', () => ({ useAuth: jest.fn() }));
 jest.mock('../api/tasks', () => ({
@@ -58,7 +58,7 @@ describe('useTasks', () => {
 
       renderHook(() => useTasks());
 
-      await act(async () => {});
+      await act(async () => { });
       expect(mockFetchTasks).not.toHaveBeenCalled();
     });
 

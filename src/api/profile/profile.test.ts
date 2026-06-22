@@ -1,5 +1,5 @@
 import { updateProfile } from './profile';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 
 jest.mock('../../lib/supabase', () => {
   const single = jest.fn();

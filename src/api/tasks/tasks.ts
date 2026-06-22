@@ -1,6 +1,6 @@
-import { supabase } from '../../lib/supabase';
-import { Task, TaskInput, TaskRow } from '../types/task';
-import { ApiResponse, successResponse, errorResponse } from "../utils/apiResponse/apiResponse"
+import { supabase } from '../../../lib/supabase';
+import { Task, TaskInput, TaskRow } from '../../types/task';
+import { ApiResponse, successResponse, errorResponse } from "../../utils/apiResponse/apiResponse"
 
 // file: contains business logic functions 
 // direct interaction with supabase
