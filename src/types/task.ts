@@ -8,6 +8,7 @@ export interface Task {
   isDaily: boolean;
   time?: string;
   completed: boolean;
+  pending?: boolean;
 }
 
 // Represents a NEW task that we use in the application before sending to supabase
@@ -44,6 +45,16 @@ export interface CreateTaskArgs {
   priority?: Priority;
   isDaily?: boolean;
   time?: string;
+}
+
+export type OperationType = 'create' | 'complete' | 'update' | 'delete';
+
+export interface PendingOperation {
+  id: string;
+  type: OperationType;
+  taskId: string;
+  input?: TaskInput;
+  createdAt: number;
 }
 
 // Hook result

@@ -1,7 +1,7 @@
 // Unit tests for rowToTask — the only place the daily-reset logic lives.
 // We inject `now` so tests don't depend on the real clock.
 import { rowToTask } from './tasks';
-jest.mock('../../lib/supabase', () => ({ supabase: {} }));
+jest.mock('../../../lib/supabase', () => ({ supabase: {} }));
 
 const BASE_ROW = {
   id: 'abc-123',
