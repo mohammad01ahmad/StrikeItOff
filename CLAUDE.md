@@ -97,22 +97,53 @@ Required in `.env` (prefixed `EXPO_PUBLIC_` for Expo to expose to the client):
 **Entry point:** `App.tsx` — handles auth state and routing between three app states:
 1. Not logged in → `SignUpScreen`
 2. Logged in but no profile → `OnboardingScreen`
-3. Fully onboarded → Dashboard (placeholder)
-4. `src/screens` and `src/components` has all the components and screens and tabs 
+3. Fully onboarded → `DashboardScreen` (4-tab layout: Today, Tasks, Grocery, Profile)
 
 **Auth flow:**
 - Google Sign-In via `@react-native-google-signin/google-signin` (native)
 - Google ID token exchanged for a Supabase session via `supabase.auth.signInWithIdToken`
 - `App.tsx` subscribes to `supabase.auth.onAuthStateChange` as the single source of truth for session state
 - `src/context/GoogleSigninService.ts` — singleton service wrapping `GoogleSignin`
-- `src/context/authContext.tsx` — `useAuth()` hook exposing `signInWithGoogle` and `signOut`
+- `src/context/authContext/authContext.tsx` — `useAuth()` hook exposing `signInWithGoogle` and `signOut`
 
-**Backend:** Supabase (`lib/supabase.ts`). Session persisted via `AsyncStorage`. Profiles stored in a `profiles` table (`id, first_name, last_name`); onboard status checked against both `user_metadata` and the `profiles` table.
+**Backend:** Supabase (`lib/supabase.ts`). Session persisted via `AsyncStorage`.
+
+Supabase tables:
+| Table | Key columns | Notes |
+|---|---|---|
+| `users` | `id, email, first_name, last_name, onboarded` | Auth + profile |
+| `tasks` | `id, user_id, name, priority, is_daily, time, completed_at` | RLS per user |
+| `grocery_lists` | `id, user_id, name` | RLS per user; cascade deletes items |
+| `grocery_items` | `id, list_id, name, quantity, checked` | RLS via list ownership |
+
+**Dashboard tabs** (`src/components/BottomTabBar.tsx`):
+- **Today** (`TodayScreen`) — shows all tasks due today; daily tasks always appear, non-daily tasks only appear on their creation date
+- **Tasks** (`TasksScreen`) — full task list with add/edit/delete
+- **Grocery** (`GroceryScreen`) — multi-list grocery manager; two-level in-tab navigation (lists → items); lists persist until deleted
+- **Profile** (`ProfileScreen`) — user profile and sign-out
+
+**Task reset logic** (`src/api/tasks/tasks.ts`):
+- Non-daily tasks are filtered out of `fetchTasks` if `created_at` is not today (local date). Old tasks are kept in the DB — they just don't appear.
+- Daily tasks reset their `completed` state each day via `isSameLocalDay(completed_at, now)`.
+- `useTasks` re-fetches on app foreground (`AppState`) and on connectivity restore (`NetInfo`) to keep the view fresh after midnight or network gaps.
+
+**Offline support** (`src/utils/pendingQueue/`, `src/api/tasks/syncQueue.ts`):
+- All task CRUD (create, complete, update, delete) works offline.
+- Offline operations are queued in AsyncStorage (`@strikeItOff:pendingOperations`) as ordered `PendingOperation` entries.
+- On reconnect or app foreground, `syncPendingOperations` flushes the queue to Supabase in order, resolving temp IDs (e.g. `pending-xxx`) to real Supabase UUIDs for any chained operations.
+- Pending tasks appear in state with `pending: true` and a temp ID until synced.
+- Grocery does not currently have offline support.
+
+**API layer pattern** (`src/api/*/`):
+- Each module exports pure mapping functions (`rowToX`) and async Supabase functions returning `ApiResponse<T>` (from `src/utils/apiResponse/apiResponse.tsx`).
+- Hooks (`src/hooks/`) consume the API layer and own all state. No business logic in hooks — just state + API calls.
+- `ApiResponse<T>` is a discriminated union: `{ status: 'success', data: T } | { status: 'error', message: string }`.
 
 **Styling:** NativeWind (Tailwind CSS for React Native). Custom design tokens defined in `tailwind.config.js`:
 - Color palette: warm neutral tones (`surface`, `primary`, `secondary`, `on-surface-variant`, `outline`)
 - Fonts: `font-manrope`, `font-manrope-medium`, `font-manrope-semibold`, `font-jetbrains-mono`
+- Full design system documented in `DESIGN.md` (colors, typography, spacing, elevation)
 - Import `'./global.css'` in `App.tsx` activates NativeWind
 
-All screens live in `src/screens/`. Shared components in `src/components/`.
+All screens live in `src/screens/tabs/`. Shared components in `src/components/`.
 All utilities, context, hooks live in `src/`.

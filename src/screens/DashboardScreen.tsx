@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import BottomTabBar, { TabName } from '../components/BottomTabBar';
 import TodayScreen from './tabs/TodayScreen';
 import TasksScreen from './tabs/TasksScreen';
+import GroceryScreen from './tabs/GroceryScreen';
 import ProfileScreen from './tabs/ProfileScreen';
 import AddTaskSheet from '../components/AddTaskSheet';
 import { useTasks } from '../hooks/useTasks';
@@ -55,6 +56,7 @@ export default function DashboardScreen() {
             onOpenAdd={openAdd}
           />
         )}
+        {activeTab === 'grocery' && <GroceryScreen />}
         {activeTab === 'profile' && <ProfileScreen />}
 
         <BottomTabBar activeTab={activeTab} onTabPress={setActiveTab} />

@@ -3,7 +3,7 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
-export type TabName = 'today' | 'tasks' | 'profile';
+export type TabName = 'today' | 'tasks' | 'grocery' | 'profile';
 
 interface TabItem {
   name: TabName;
@@ -14,6 +14,7 @@ interface TabItem {
 const TABS: TabItem[] = [
   { name: 'today', label: 'TODAY', icon: 'sun' },
   { name: 'tasks', label: 'TASKS', icon: 'check-square' },
+  { name: 'grocery', label: 'GROCERY', icon: 'shopping-cart' },
   { name: 'profile', label: 'PROFILE', icon: 'user' },
 ];
 
