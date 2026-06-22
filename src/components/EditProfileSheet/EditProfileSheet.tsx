@@ -13,7 +13,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { updateProfile } from '../api/profile';
+import { updateProfile } from '@/api/profile/profile';
 
 interface EditProfileSheetProps {
   visible: boolean;

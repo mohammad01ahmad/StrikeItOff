@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed. This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This is a task tracking application, where you can set daily (recurring tasks) and they appear daily on the screen. Users can create new tasks and it resets when the day is over. Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed. This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## 1. Think Before Coding
 
@@ -98,6 +98,7 @@ Required in `.env` (prefixed `EXPO_PUBLIC_` for Expo to expose to the client):
 1. Not logged in → `SignUpScreen`
 2. Logged in but no profile → `OnboardingScreen`
 3. Fully onboarded → Dashboard (placeholder)
+4. `src/screens` and `src/components` has all the components and screens and tabs 
 
 **Auth flow:**
 - Google Sign-In via `@react-native-google-signin/google-signin` (native)

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { AppState } from 'react-native';
 import { Task, TaskInput, UseTasksResult } from '../types/task';
 import {
   fetchTasks,
@@ -34,6 +35,13 @@ export function useTasks(): UseTasksResult {
     setLoading(true);
     loadTasks();
   }, [session?.user.id, loadTasks]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') loadTasks();
+    });
+    return () => subscription.remove();
+  }, [loadTasks]);
 
   const addTask = async (input: TaskInput) => {
     if (!session?.user.id) return;

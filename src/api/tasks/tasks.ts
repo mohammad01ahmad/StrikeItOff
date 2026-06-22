@@ -45,7 +45,10 @@ export async function fetchTasks(): Promise<ApiResponse<Task[]>> {
     if (!data) return errorResponse('Failed to fetch tasks.', 500);
 
     const now = new Date();
-    return successResponse('Tasks fetched successfully.', (data as TaskRow[]).map((row) => rowToTask(row, now)));
+    const visibleRows = (data as TaskRow[]).filter(
+      (row) => row.is_daily || isSameLocalDay(new Date(row.created_at), now)
+    );
+    return successResponse('Tasks fetched successfully.', visibleRows.map((row) => rowToTask(row, now)));
   } catch (err: any) {
     const fallbackMessage = err instanceof Error ? err.message : 'Failed to fetch tasks.';
     return errorResponse(fallbackMessage, 500);
