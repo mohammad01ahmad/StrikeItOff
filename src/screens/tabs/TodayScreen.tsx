@@ -19,7 +19,7 @@ export default function TodayScreen({ tasks, onComplete, onEdit, onDelete }: Tod
   const { session } = useAuth();
   const firstName = session?.user.user_metadata?.first_name || 'there';
   const remaining = tasks.filter((t) => !t.completed).length;
-  const { steps, available: stepsAvailable } = useStepCount();
+  const { steps, available: stepsAvailable, supported: stepsSupported, requestAccess } = useStepCount();
 
   return (
     <ScrollView
@@ -50,7 +50,24 @@ export default function TodayScreen({ tasks, onComplete, onEdit, onDelete }: Tod
           {getGreeting()}, {firstName}.
         </Text>
 
-        {/* Step count card */}
+        {/* Steps — prompt to enable */}
+        {stepsSupported && !stepsAvailable && (
+          <Pressable
+            onPress={requestAccess}
+            className="mt-6 flex-row items-center justify-between rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 active:opacity-70">
+            <View>
+              <Text className="font-jetbrains-mono text-[11px] uppercase tracking-[0.08em] text-outline">
+                Steps Today
+              </Text>
+              <Text className="mt-0.5 font-manrope text-sm text-outline">
+                Tap to enable step tracking
+              </Text>
+            </View>
+            <Feather name="activity" size={18} color="#cfc4bd" />
+          </Pressable>
+        )}
+
+        {/* Steps — count card */}
         {stepsAvailable && steps !== null && (
           <View className="mt-6 rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3">
             <Text className="font-jetbrains-mono text-[11px] uppercase tracking-[0.08em] text-outline">
