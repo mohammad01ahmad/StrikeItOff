@@ -33,12 +33,9 @@ export default function TasksScreen({
           <Text className="font-manrope-semibold text-[18px] tracking-[-0.01em] text-primary">
             StrikeItOff
           </Text>
-          <Pressable
-            className="h-8 w-8 items-center justify-center rounded-full bg-surface-container active:opacity-70"
-            accessibilityLabel="Profile"
-            accessibilityRole="button">
+          <View className="h-8 w-8 items-center justify-center rounded-full bg-surface-container">
             <Feather name="user" size={16} color="#4d4540" />
-          </Pressable>
+          </View>
         </View>
 
         {/* Add task CTA card */}

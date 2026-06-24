@@ -1,6 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { GroceryList, GroceryItem, GroceryListRow, GroceryItemRow } from '../../types/grocery';
-import { ApiResponse, successResponse, errorResponse } from '../../utils/apiResponse/apiResponse';
+import { ApiResponse, successResponse, errorResponse, withApi } from '../../utils/apiResponse/apiResponse';
 
 export function rowToList(row: GroceryListRow): GroceryList {
   return {
@@ -22,7 +22,7 @@ export function rowToItem(row: GroceryItemRow): GroceryItem {
 }
 
 export async function fetchLists(): Promise<ApiResponse<GroceryList[]>> {
-  try {
+  return withApi(async () => {
     const { data, error } = await supabase
       .from('grocery_lists')
       .select('id, name, created_at, grocery_items(id, checked)')
@@ -30,15 +30,12 @@ export async function fetchLists(): Promise<ApiResponse<GroceryList[]>> {
 
     if (error) return errorResponse(error.message);
     if (!data) return errorResponse('Failed to fetch grocery lists.', 500);
-
     return successResponse('Lists fetched.', (data as GroceryListRow[]).map(rowToList));
-  } catch (err: any) {
-    return errorResponse(err instanceof Error ? err.message : 'Failed to fetch grocery lists.', 500);
-  }
+  });
 }
 
 export async function createList(userId: string, name: string): Promise<ApiResponse<GroceryList>> {
-  try {
+  return withApi(async () => {
     const { data, error } = await supabase
       .from('grocery_lists')
       .insert({ user_id: userId, name: name.trim() })
@@ -47,25 +44,20 @@ export async function createList(userId: string, name: string): Promise<ApiRespo
 
     if (error) return errorResponse(error.message);
     if (!data) return errorResponse('Failed to retrieve list after creation.', 500);
-
-    return successResponse('List created.', rowToList({ ...data, grocery_items: [] }), 201);
-  } catch (err: any) {
-    return errorResponse(err instanceof Error ? err.message : 'Failed to create list.', 500);
-  }
+    return successResponse('List created.', rowToList({ ...data, grocery_items: [] } as unknown as GroceryListRow), 201);
+  });
 }
 
 export async function deleteList(id: string): Promise<ApiResponse<void>> {
-  try {
+  return withApi(async () => {
     const { error } = await supabase.from('grocery_lists').delete().eq('id', id);
     if (error) return errorResponse(error.message);
     return successResponse('List deleted.');
-  } catch (err: any) {
-    return errorResponse(err instanceof Error ? err.message : 'Failed to delete list.', 500);
-  }
+  });
 }
 
 export async function fetchItems(listId: string): Promise<ApiResponse<GroceryItem[]>> {
-  try {
+  return withApi(async () => {
     const { data, error } = await supabase
       .from('grocery_items')
       .select('*')
@@ -74,11 +66,8 @@ export async function fetchItems(listId: string): Promise<ApiResponse<GroceryIte
 
     if (error) return errorResponse(error.message);
     if (!data) return errorResponse('Failed to fetch items.', 500);
-
     return successResponse('Items fetched.', (data as GroceryItemRow[]).map(rowToItem));
-  } catch (err: any) {
-    return errorResponse(err instanceof Error ? err.message : 'Failed to fetch items.', 500);
-  }
+  });
 }
 
 export async function addItem(
@@ -86,7 +75,7 @@ export async function addItem(
   name: string,
   quantity?: string
 ): Promise<ApiResponse<GroceryItem>> {
-  try {
+  return withApi(async () => {
     const { data, error } = await supabase
       .from('grocery_items')
       .insert({ list_id: listId, name: name.trim(), quantity: quantity?.trim() || null })
@@ -95,15 +84,12 @@ export async function addItem(
 
     if (error) return errorResponse(error.message);
     if (!data) return errorResponse('Failed to retrieve item after creation.', 500);
-
     return successResponse('Item added.', rowToItem(data as GroceryItemRow), 201);
-  } catch (err: any) {
-    return errorResponse(err instanceof Error ? err.message : 'Failed to add item.', 500);
-  }
+  });
 }
 
 export async function toggleItem(id: string, checked: boolean): Promise<ApiResponse<GroceryItem>> {
-  try {
+  return withApi(async () => {
     const { data, error } = await supabase
       .from('grocery_items')
       .update({ checked })
@@ -113,25 +99,20 @@ export async function toggleItem(id: string, checked: boolean): Promise<ApiRespo
 
     if (error) return errorResponse(error.message);
     if (!data) return errorResponse('Failed to retrieve item after update.', 500);
-
     return successResponse('Item updated.', rowToItem(data as GroceryItemRow));
-  } catch (err: any) {
-    return errorResponse(err instanceof Error ? err.message : 'Failed to toggle item.', 500);
-  }
+  });
 }
 
 export async function deleteItem(id: string): Promise<ApiResponse<void>> {
-  try {
+  return withApi(async () => {
     const { error } = await supabase.from('grocery_items').delete().eq('id', id);
     if (error) return errorResponse(error.message);
     return successResponse('Item deleted.');
-  } catch (err: any) {
-    return errorResponse(err instanceof Error ? err.message : 'Failed to delete item.', 500);
-  }
+  });
 }
 
 export async function clearCheckedItems(listId: string): Promise<ApiResponse<void>> {
-  try {
+  return withApi(async () => {
     const { error } = await supabase
       .from('grocery_items')
       .delete()
@@ -140,7 +121,5 @@ export async function clearCheckedItems(listId: string): Promise<ApiResponse<voi
 
     if (error) return errorResponse(error.message);
     return successResponse('Checked items cleared.');
-  } catch (err: any) {
-    return errorResponse(err instanceof Error ? err.message : 'Failed to clear items.', 500);
-  }
+  });
 }

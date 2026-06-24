@@ -136,7 +136,7 @@ export default function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCar
 
   const pan = Gesture.Pan()
     .activeOffsetX([8, 9999])
-    .failOffsetY([-12, 12])
+    .failOffsetY([-25, 25])
     .onUpdate((e) => {
       if (e.translationX < 0) return;
       translateX.value = e.translationX;
@@ -163,6 +163,7 @@ export default function TaskCard({ task, onComplete, onEdit, onDelete }: TaskCar
   // trashTap must be created before cardTap so cardTap can reference it
   const trashTap = Gesture.Tap().onEnd(() => runOnJS(handleDeletePress)());
   const cardTap = Gesture.Tap()
+    .maxDistance(10)
     .requireExternalGestureToFail(trashTap)
     .onEnd(() => runOnJS(onEdit)(task));
   const composed = Gesture.Race(pan, cardTap);

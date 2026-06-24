@@ -138,6 +138,7 @@ Supabase tables:
 - Each module exports pure mapping functions (`rowToX`) and async Supabase functions returning `ApiResponse<T>` (from `src/utils/apiResponse/apiResponse.tsx`).
 - Hooks (`src/hooks/`) consume the API layer and own all state. No business logic in hooks — just state + API calls.
 - `ApiResponse<T>` is a discriminated union: `{ status: 'success', data: T } | { status: 'error', message: string }`.
+- Always use `withApi`, `successResponse`, and `errorResponse` from `src/utils/apiResponse/apiResponse.tsx` for all API functions. Never inline try/catch or build custom response shapes.
 
 **Styling:** NativeWind (Tailwind CSS for React Native). Custom design tokens defined in `tailwind.config.js`:
 - Color palette: warm neutral tones (`surface`, `primary`, `secondary`, `on-surface-variant`, `outline`)

@@ -38,3 +38,11 @@ export function errorResponse(message: string, code = 400, errors?: ValidationEr
     ...(errors !== undefined && { errors })
   };
 }
+
+export async function withApi<T>(fn: () => Promise<ApiResponse<T>>): Promise<ApiResponse<T>> {
+  try {
+    return await fn();
+  } catch (err) {
+    return errorResponse(err instanceof Error ? err.message : 'Request failed.', 500);
+  }
+}

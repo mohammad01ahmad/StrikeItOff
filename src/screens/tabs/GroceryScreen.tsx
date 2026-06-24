@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { GroceryList, GroceryItem } from '../../types/grocery';
 import { useGroceryLists } from '../../hooks/useGroceryLists';
@@ -74,12 +74,13 @@ function ListCard({ list, onPress, onDelete }: ListCardProps) {
 
 interface ListsViewProps {
   lists: GroceryList[];
+  loading: boolean;
   onSelectList: (id: string) => void;
   onDeleteList: (id: string) => void;
   onNewList: () => void;
 }
 
-function ListsView({ lists, onSelectList, onDeleteList, onNewList }: ListsViewProps) {
+function ListsView({ lists, loading, onSelectList, onDeleteList, onNewList }: ListsViewProps) {
   return (
     <View className="flex-1">
       <ScrollView
@@ -99,26 +100,31 @@ function ListsView({ lists, onSelectList, onDeleteList, onNewList }: ListsViewPr
               Your Lists
             </Text>
             <Text className="font-jetbrains-mono text-[11px] tracking-[0.04em] text-outline">
-              {lists.length} {lists.length === 1 ? 'list' : 'lists'}
+              {lists.length} list{lists.length !== 1 ? 's' : ''}
             </Text>
           </View>
 
-          {lists.length === 0 && (
-            <View className="items-center py-10">
-              <Text className="font-manrope text-base leading-6 text-outline">
-                No lists yet. Start one below.
-              </Text>
-            </View>
+          {loading ? (
+            <ActivityIndicator className="py-10" />
+          ) : (
+            <>
+              {lists.length === 0 && (
+                <View className="items-center py-10">
+                  <Text className="font-manrope text-base leading-6 text-outline">
+                    No lists yet. Start one below.
+                  </Text>
+                </View>
+              )}
+              {lists.map((list) => (
+                <ListCard
+                  key={list.id}
+                  list={list}
+                  onPress={() => onSelectList(list.id)}
+                  onDelete={onDeleteList}
+                />
+              ))}
+            </>
           )}
-
-          {lists.map((list) => (
-            <ListCard
-              key={list.id}
-              list={list}
-              onPress={() => onSelectList(list.id)}
-              onDelete={onDeleteList}
-            />
-          ))}
         </View>
       </ScrollView>
 
@@ -191,6 +197,7 @@ function ItemRow({ item, onToggle, onDelete }: ItemRowProps) {
 
 interface ItemsViewProps {
   listName: string;
+  loading: boolean;
   onBack: () => void;
   onAddItem: () => void;
   items: GroceryItem[];
@@ -201,6 +208,7 @@ interface ItemsViewProps {
 
 function ItemsView({
   listName,
+  loading,
   onBack,
   onAddItem,
   items,
@@ -240,39 +248,45 @@ function ItemsView({
             </Text>
           </View>
 
-          {items.length === 0 && (
-            <View className="items-center py-10">
-              <Text className="font-manrope text-base leading-6 text-outline">
-                Nothing here yet. Add your first item.
-              </Text>
-            </View>
-          )}
-
-          {/* Unchecked items */}
-          {unchecked.map((item) => (
-            <ItemRow key={item.id} item={item} onToggle={onToggle} onDelete={onDelete} />
-          ))}
-
-          {/* Checked section */}
-          {checked.length > 0 && (
+          {loading ? (
+            <ActivityIndicator className="py-10" />
+          ) : (
             <>
-              <View className="my-4 flex-row items-center justify-between">
-                <View className="flex-1 border-t border-outline-variant" />
-                <Text className="mx-3 font-jetbrains-mono text-[10px] uppercase tracking-[0.08em] text-outline">
-                  In basket
-                </Text>
-                <View className="flex-1 border-t border-outline-variant" />
-              </View>
-              {checked.map((item) => (
+              {items.length === 0 && (
+                <View className="items-center py-10">
+                  <Text className="font-manrope text-base leading-6 text-outline">
+                    Nothing here yet. Add your first item.
+                  </Text>
+                </View>
+              )}
+
+              {/* Unchecked items */}
+              {unchecked.map((item) => (
                 <ItemRow key={item.id} item={item} onToggle={onToggle} onDelete={onDelete} />
               ))}
-              <Pressable
-                onPress={onClearChecked}
-                className="mt-2 self-start rounded border border-outline-variant px-4 py-2 active:opacity-60">
-                <Text className="font-jetbrains-mono text-[10px] uppercase tracking-[0.08em] text-outline">
-                  Clear checked
-                </Text>
-              </Pressable>
+
+              {/* Checked section */}
+              {checked.length > 0 && (
+                <>
+                  <View className="my-4 flex-row items-center justify-between">
+                    <View className="flex-1 border-t border-outline-variant" />
+                    <Text className="mx-3 font-jetbrains-mono text-[10px] uppercase tracking-[0.08em] text-outline">
+                      In basket
+                    </Text>
+                    <View className="flex-1 border-t border-outline-variant" />
+                  </View>
+                  {checked.map((item) => (
+                    <ItemRow key={item.id} item={item} onToggle={onToggle} onDelete={onDelete} />
+                  ))}
+                  <Pressable
+                    onPress={onClearChecked}
+                    className="mt-2 self-start rounded border border-outline-variant px-4 py-2 active:opacity-60">
+                    <Text className="font-jetbrains-mono text-[10px] uppercase tracking-[0.08em] text-outline">
+                      Clear checked
+                    </Text>
+                  </Pressable>
+                </>
+              )}
             </>
           )}
         </View>
@@ -300,8 +314,8 @@ export default function GroceryScreen() {
   const [listSheetVisible, setListSheetVisible] = useState(false);
   const [itemSheetVisible, setItemSheetVisible] = useState(false);
 
-  const { lists, createList, deleteList } = useGroceryLists();
-  const { items, addItem, toggleItem, deleteItem, clearChecked } = useGroceryItems(selectedListId);
+  const { lists, loading: listsLoading, createList, deleteList } = useGroceryLists();
+  const { items, loading: itemsLoading, addItem, toggleItem, deleteItem, clearChecked } = useGroceryItems(selectedListId);
 
   const selectedList = lists.find((l) => l.id === selectedListId);
 
@@ -310,6 +324,7 @@ export default function GroceryScreen() {
       <>
         <ItemsView
           listName={selectedList.name}
+          loading={itemsLoading}
           onBack={() => setSelectedListId(null)}
           onAddItem={() => setItemSheetVisible(true)}
           items={items}
@@ -330,6 +345,7 @@ export default function GroceryScreen() {
     <>
       <ListsView
         lists={lists}
+        loading={listsLoading}
         onSelectList={setSelectedListId}
         onDeleteList={deleteList}
         onNewList={() => setListSheetVisible(true)}
