@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
-import AppleHealthKit, { HealthKitPermissions } from 'react-native-health';
-import { initialize, requestPermission, readRecords } from 'react-native-health-connect';
 
 export function useStepCount(): { steps: number | null; available: boolean } {
   const [steps, setSteps] = useState<number | null>(null);
@@ -13,25 +11,34 @@ export function useStepCount(): { steps: number | null; available: boolean } {
   }, []);
 
   function loadIOS() {
-    const perms: HealthKitPermissions = {
-      permissions: { read: [AppleHealthKit.Constants.Permissions.StepCount], write: [] },
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const AHK = require('react-native-health');
+    // Native module not linked (needs expo prebuild + pod install)
+    if (typeof AHK.isAvailable !== 'function') return;
+    const perms = {
+      permissions: { read: [AHK.Constants.Permissions.StepCount], write: [] },
     };
-    AppleHealthKit.isAvailable((err, avail) => {
+    AHK.isAvailable((err: unknown, avail: boolean) => {
       if (err || !avail) return;
-      AppleHealthKit.initHealthKit(perms, (initErr) => {
+      AHK.initHealthKit(perms, (initErr: unknown) => {
         if (initErr) return;
         const start = new Date();
         start.setHours(0, 0, 0, 0);
-        AppleHealthKit.getStepCount({ date: start.toISOString() }, (stepErr, result) => {
-          if (stepErr) return;
-          setSteps(result.value);
-          setAvailable(true);
-        });
+        AHK.getStepCount(
+          { date: start.toISOString() },
+          (stepErr: unknown, result: { value: number }) => {
+            if (stepErr) return;
+            setSteps(result.value);
+            setAvailable(true);
+          }
+        );
       });
     });
   }
 
   async function loadAndroid() {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { initialize, requestPermission, readRecords } = require('react-native-health-connect');
     const initialized = await initialize();
     if (!initialized) return;
     await requestPermission([{ accessType: 'read', recordType: 'Steps' }]);
@@ -44,7 +51,7 @@ export function useStepCount(): { steps: number | null; available: boolean } {
         endTime: new Date().toISOString(),
       },
     });
-    setSteps(records.reduce((sum, r) => sum + r.count, 0));
+    setSteps(records.reduce((sum: number, r: { count: number }) => sum + r.count, 0));
     setAvailable(true);
   }
 

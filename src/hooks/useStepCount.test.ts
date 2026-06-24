@@ -6,13 +6,10 @@ jest.mock('react-native', () => ({
 }));
 
 jest.mock('react-native-health', () => ({
-  __esModule: true,
-  default: {
-    isAvailable: jest.fn(),
-    initHealthKit: jest.fn(),
-    getStepCount: jest.fn(),
-    Constants: { Permissions: { StepCount: 'HKQuantityTypeIdentifierStepCount' } },
-  },
+  isAvailable: jest.fn(),
+  initHealthKit: jest.fn(),
+  getStepCount: jest.fn(),
+  Constants: { Permissions: { StepCount: 'HKQuantityTypeIdentifierStepCount' } },
 }));
 
 jest.mock('react-native-health-connect', () => ({
@@ -21,11 +18,11 @@ jest.mock('react-native-health-connect', () => ({
   readRecords: jest.fn(),
 }));
 
-import AppleHealthKit from 'react-native-health';
+import * as HealthKit from 'react-native-health';
 import { initialize, requestPermission, readRecords } from 'react-native-health-connect';
 import { useStepCount } from './useStepCount';
 
-const mockAHK = AppleHealthKit as jest.Mocked<typeof AppleHealthKit>;
+const mockAHK = HealthKit as Record<string, jest.Mock>;
 const mockInit = initialize as jest.Mock;
 const mockReadRecords = readRecords as jest.Mock;
 
