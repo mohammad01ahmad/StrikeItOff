@@ -18,7 +18,9 @@
           "iosUrlScheme": "com.googleusercontent.apps.786358084803-f38kmarfrmqu3qea3end84kvli543ne1"
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "react-native-health-connect",
+      "react-native-health"
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -28,7 +30,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "bundleIdentifier": "com.strikeitoff.app",
       "infoPlist": {
@@ -38,11 +42,18 @@
               "com.googleusercontent.apps.786358084803-f38kmarfrmqu3qea3end84kvli543ne1"
             ]
           }
-        ]
+        ],
+        "NSHealthShareUsageDescription": "StrikeItOff reads your step count to show daily activity alongside your tasks."
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true
       }
     },
     "android": {
       "package": "com.strikeitoff.app",
+      "permissions": [
+        "android.permission.ACTIVITY_RECOGNITION"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

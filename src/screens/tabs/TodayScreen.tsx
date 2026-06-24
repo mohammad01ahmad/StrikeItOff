@@ -4,6 +4,7 @@ import { useAuth } from '../../context/authContext/authContext';
 import { Task } from '../../types/task';
 import TaskCard from '../../components/TaskCard';
 import { formatToday, getGreeting } from '../../utils/greeting/greeting';
+import { useStepCount } from '../../hooks/useStepCount';
 
 const TAB_BAR_HEIGHT = 80;
 
@@ -18,6 +19,7 @@ export default function TodayScreen({ tasks, onComplete, onEdit, onDelete }: Tod
   const { session } = useAuth();
   const firstName = session?.user.user_metadata?.first_name || 'there';
   const remaining = tasks.filter((t) => !t.completed).length;
+  const { steps, available: stepsAvailable } = useStepCount();
 
   return (
     <ScrollView
@@ -47,6 +49,18 @@ export default function TodayScreen({ tasks, onComplete, onEdit, onDelete }: Tod
         <Text className="mt-3 font-manrope-semibold text-[32px] leading-10 tracking-[-0.02em] text-primary">
           {getGreeting()}, {firstName}.
         </Text>
+
+        {/* Step count card */}
+        {stepsAvailable && steps !== null && (
+          <View className="mt-6 rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3">
+            <Text className="font-jetbrains-mono text-[11px] uppercase tracking-[0.08em] text-outline">
+              Steps Today
+            </Text>
+            <Text className="mt-1 font-manrope-semibold text-[28px] leading-9 tracking-[-0.01em] text-primary">
+              {steps.toLocaleString()}
+            </Text>
+          </View>
+        )}
 
         {/* Section heading + count */}
         <View className="mb-5 mt-10 flex-row items-baseline justify-between">
