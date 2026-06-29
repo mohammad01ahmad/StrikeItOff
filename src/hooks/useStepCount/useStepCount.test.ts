@@ -1,131 +1,85 @@
-// Tests for useStepCount covering both iOS (HealthKit) and Android (Health Connect).
-// Verifies device-support detection on mount and the full permission + fetch flow triggered by requestAccess.
+// Tests for useStepCount — iOS/HealthKit only.
+// Mocks healthKitManager directly; no native module mocking needed.
 import { renderHook, waitFor, act } from '@testing-library/react-native';
-
-let mockPlatformOS = 'ios';
-jest.mock('react-native', () => ({
-  Platform: { get OS() { return mockPlatformOS; } },
-}));
-
-jest.mock('react-native-health', () => ({
-  isAvailable: jest.fn(),
-  initHealthKit: jest.fn(),
-  getStepCount: jest.fn(),
-  Constants: { Permissions: { StepCount: 'HKQuantityTypeIdentifierStepCount' } },
-}));
-
-jest.mock('react-native-health-connect', () => ({
-  initialize: jest.fn(),
-  requestPermission: jest.fn(),
-  readRecords: jest.fn(),
-}));
-
-import * as HealthKit from 'react-native-health';
-import { initialize, requestPermission, readRecords } from 'react-native-health-connect';
+import { healthKitManager } from '@/utils/stepCount/HealthKitManager';
 import { useStepCount } from './useStepCount';
 
-const mockAHK = HealthKit as unknown as Record<string, jest.Mock>;
-const mockInit = initialize as jest.Mock;
-const mockReadRecords = readRecords as jest.Mock;
+jest.mock('@/utils/stepCount/HealthKitManager', () => ({
+  healthKitManager: {
+    isAvailable: jest.fn(),
+    getAuthStatus: jest.fn(),
+    requestPermissions: jest.fn(),
+    getTodayStepCount: jest.fn(),
+  },
+}));
+
+const hkm = healthKitManager as jest.Mocked<typeof healthKitManager>;
 
 beforeEach(() => jest.clearAllMocks());
 
-describe('useStepCount — iOS', () => {
-  beforeEach(() => { mockPlatformOS = 'ios'; });
-
-  it('sets supported:true when HealthKit is available on device', async () => {
-    mockAHK.isAvailable.mockImplementation((cb) => cb(null, true));
+describe('useStepCount', () => {
+  it('sets permissionStatus:unavailable on mount when HealthKit is not available', async () => {
+    hkm.isAvailable.mockReturnValue(false);
 
     const { result } = renderHook(() => useStepCount());
-    await waitFor(() => expect(result.current.supported).toBe(true));
+    await waitFor(() => expect(result.current.permissionStatus).toBe('unavailable'));
 
-    expect(result.current.available).toBe(false);
-    expect(result.current.steps).toBeNull();
+    expect(result.current.steps).toBe(0);
+    expect(result.current.loading).toBe(false);
   });
 
-  it('keeps supported:false when HealthKit is not available on device', async () => {
-    mockAHK.isAvailable.mockImplementation((cb) => cb(null, false));
+  it('stays idle on mount when HealthKit is available (no auto-fetch)', async () => {
+    hkm.isAvailable.mockReturnValue(true);
 
     const { result } = renderHook(() => useStepCount());
-    await waitFor(() => { });
+    await waitFor(() => {});
 
-    expect(result.current.supported).toBe(false);
+    expect(result.current.permissionStatus).toBe('idle');
+    expect(hkm.requestPermissions).not.toHaveBeenCalled();
   });
 
-  it('requestAccess: loads steps and sets available:true on success', async () => {
-    mockAHK.isAvailable.mockImplementation((cb) => cb(null, true));
-    mockAHK.initHealthKit.mockImplementation((_p, cb) => cb(null));
-    mockAHK.getStepCount.mockImplementation((_o, cb) => cb(null, { value: 4200 }));
+  it('requestAndFetch: sets granted + steps on success', async () => {
+    hkm.isAvailable.mockReturnValue(true);
+    hkm.getAuthStatus.mockResolvedValue('granted');
+    hkm.requestPermissions.mockResolvedValue(undefined);
+    hkm.getTodayStepCount.mockResolvedValue(4200);
 
     const { result } = renderHook(() => useStepCount());
-    await waitFor(() => expect(result.current.supported).toBe(true));
 
-    await act(async () => { result.current.requestAccess(); });
-    await waitFor(() => expect(result.current.available).toBe(true));
+    await act(async () => { await result.current.requestAndFetch(); });
 
+    expect(result.current.permissionStatus).toBe('granted');
     expect(result.current.steps).toBe(4200);
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBeNull();
   });
 
-  it('requestAccess: stays unavailable when initHealthKit fails (permission denied)', async () => {
-    mockAHK.isAvailable.mockImplementation((cb) => cb(null, true));
-    mockAHK.initHealthKit.mockImplementation((_p, cb) => cb('Permission denied'));
+  it('requestAndFetch: sets denied + error when requestPermissions rejects', async () => {
+    hkm.isAvailable.mockReturnValue(true);
+    hkm.getAuthStatus.mockResolvedValue('idle');
+    hkm.requestPermissions.mockRejectedValue(new Error('Permission denied'));
 
     const { result } = renderHook(() => useStepCount());
-    await waitFor(() => expect(result.current.supported).toBe(true));
 
-    await act(async () => { result.current.requestAccess(); });
+    await act(async () => { await result.current.requestAndFetch(); });
 
-    expect(result.current.available).toBe(false);
-    expect(result.current.steps).toBeNull();
-  });
-});
-
-describe('useStepCount — Android', () => {
-  beforeEach(() => { mockPlatformOS = 'android'; });
-
-  it('sets supported:true when Health Connect initializes', async () => {
-    mockInit.mockResolvedValue(true);
-
-    const { result } = renderHook(() => useStepCount());
-    await waitFor(() => expect(result.current.supported).toBe(true));
-
-    expect(result.current.available).toBe(false);
+    expect(result.current.permissionStatus).toBe('denied');
+    expect(result.current.error).toBe('Permission denied');
+    expect(result.current.steps).toBe(0);
+    expect(result.current.loading).toBe(false);
   });
 
-  it('keeps supported:false when Health Connect cannot initialize', async () => {
-    mockInit.mockResolvedValue(false);
+  it('requestAndFetch: handles 0 steps correctly (not treated as failure)', async () => {
+    hkm.isAvailable.mockReturnValue(true);
+    hkm.getAuthStatus.mockResolvedValue('granted');
+    hkm.requestPermissions.mockResolvedValue(undefined);
+    hkm.getTodayStepCount.mockResolvedValue(0);
 
     const { result } = renderHook(() => useStepCount());
-    await waitFor(() => { });
 
-    expect(result.current.supported).toBe(false);
-  });
+    await act(async () => { await result.current.requestAndFetch(); });
 
-  it('requestAccess: loads summed steps on success', async () => {
-    mockInit.mockResolvedValue(true);
-    (requestPermission as jest.Mock).mockResolvedValue([]);
-    mockReadRecords.mockResolvedValue({ records: [{ count: 2000 }, { count: 1500 }] });
-
-    const { result } = renderHook(() => useStepCount());
-    await waitFor(() => expect(result.current.supported).toBe(true));
-
-    await act(async () => { result.current.requestAccess(); });
-    await waitFor(() => expect(result.current.available).toBe(true));
-
-    expect(result.current.steps).toBe(3500);
-  });
-
-  it('requestAccess: returns 0 steps when no records exist for today', async () => {
-    mockInit.mockResolvedValue(true);
-    (requestPermission as jest.Mock).mockResolvedValue([]);
-    mockReadRecords.mockResolvedValue({ records: [] });
-
-    const { result } = renderHook(() => useStepCount());
-    await waitFor(() => expect(result.current.supported).toBe(true));
-
-    await act(async () => { result.current.requestAccess(); });
-    await waitFor(() => expect(result.current.available).toBe(true));
-
+    expect(result.current.permissionStatus).toBe('granted');
     expect(result.current.steps).toBe(0);
   });
 });

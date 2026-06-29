@@ -20,7 +20,12 @@
       ],
       "@react-native-community/datetimepicker",
       "react-native-health-connect",
-      "react-native-health"
+      [
+        "react-native-health",
+        {
+          "isClinicalDataEnabled": false
+        }
+      ]
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -46,7 +51,8 @@
         "NSHealthShareUsageDescription": "StrikeItOff reads your step count to show daily activity alongside your tasks."
       },
       "entitlements": {
-        "com.apple.developer.healthkit": true
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.access": []
       }
     },
     "android": {

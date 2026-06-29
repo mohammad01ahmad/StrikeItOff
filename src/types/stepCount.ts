@@ -1,10 +1,3 @@
-// Contains the types for both Apple HK & Android Health
+// iOS-only types for step count / HealthKit integration
 
-
-export type PermissionStatus = 'authorized' | 'denied' | 'notDetermined' | 'unavailable';
-
-export interface StepResult {
-    value: number;
-    startDate: string;
-    endDate: string;
-}
+export type PermissionStatus = 'idle' | 'granted' | 'denied' | 'unavailable';
