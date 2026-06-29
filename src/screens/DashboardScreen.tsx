@@ -7,7 +7,7 @@ import TasksScreen from './tabs/TasksScreen';
 import GroceryScreen from './tabs/GroceryScreen';
 import ProfileScreen from './tabs/ProfileScreen';
 import AddTaskSheet from '../components/AddTaskSheet';
-import { useTasks } from '../hooks/useTasks';
+import { useTasks } from '../hooks/useTasks/useTasks';
 import { Task } from '../types/task';
 
 export default function DashboardScreen() {

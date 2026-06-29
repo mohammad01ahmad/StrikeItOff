@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { GroceryItem } from '../types/grocery';
+import { GroceryItem } from '../../types/grocery';
 import {
   fetchItems,
   addItem as apiAddItem,
   toggleItem as apiToggleItem,
   deleteItem as apiDeleteItem,
   clearCheckedItems,
-} from '../api/grocery/grocery';
+} from '../../api/grocery/grocery';
 
 interface UseGroceryItemsResult {
   items: GroceryItem[];

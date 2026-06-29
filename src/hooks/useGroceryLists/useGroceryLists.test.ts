@@ -1,10 +1,10 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { useGroceryLists } from './useGroceryLists';
-import { useAuth } from '../context/authContext/authContext';
-import * as groceryApi from '../api/grocery/grocery';
+import { useAuth } from '../../context/authContext/authContext';
+import * as groceryApi from '../../api/grocery/grocery';
 
-jest.mock('../context/authContext/authContext', () => ({ useAuth: jest.fn() }));
-jest.mock('../api/grocery/grocery', () => ({
+jest.mock('../../context/authContext/authContext', () => ({ useAuth: jest.fn() }));
+jest.mock('../../api/grocery/grocery', () => ({
   fetchLists: jest.fn(),
   createList: jest.fn(),
   deleteList: jest.fn(),
@@ -49,7 +49,7 @@ describe('useGroceryLists', () => {
     it('does not call fetchLists when there is no session', async () => {
       mockUseAuth.mockReturnValue({ session: null });
       renderHook(() => useGroceryLists());
-      await act(async () => {});
+      await act(async () => { });
       expect(mockFetchLists).not.toHaveBeenCalled();
     });
 

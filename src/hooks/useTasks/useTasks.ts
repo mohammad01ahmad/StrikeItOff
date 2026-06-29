@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AppState } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
-import { Task, TaskInput, UseTasksResult } from '../types/task';
+import { Task, TaskInput, UseTasksResult } from '../../types/task';
 import {
   fetchTasks,
   addTask as apiAddTask,
   completeTask as apiCompleteTask,
   updateTask as apiUpdateTask,
   deleteTask as apiDeleteTask,
-} from '../api/tasks/tasks';
-import { syncPendingOperations } from '../api/tasks/syncQueue';
-import { enqueue, generateTempId } from '../utils/pendingQueue/pendingQueue';
-import { useAuth } from '../context/authContext/authContext';
+} from '../../api/tasks/tasks';
+import { syncPendingOperations } from '../../api/tasks/syncQueue';
+import { enqueue, generateTempId } from '../../utils/pendingQueue/pendingQueue';
+import { useAuth } from '../../context/authContext/authContext';
 
 export function useTasks(): UseTasksResult {
   const { session } = useAuth();

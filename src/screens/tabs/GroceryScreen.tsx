@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { GroceryList, GroceryItem } from '../../types/grocery';
-import { useGroceryLists } from '../../hooks/useGroceryLists';
-import { useGroceryItems } from '../../hooks/useGroceryItems';
+import { useGroceryLists } from '../../hooks/useGroceryLists/useGroceryLists';
+import { useGroceryItems } from '../../hooks/useGroceryItems/useGroceryItems';
 import AddGroceryListSheet from '../../components/AddGroceryListSheet';
 import AddGroceryItemSheet from '../../components/AddGroceryItemSheet';
 

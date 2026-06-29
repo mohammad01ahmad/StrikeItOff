@@ -1,3 +1,5 @@
+// Tests for useStepCount covering both iOS (HealthKit) and Android (Health Connect).
+// Verifies device-support detection on mount and the full permission + fetch flow triggered by requestAccess.
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 
 let mockPlatformOS = 'ios';
@@ -45,7 +47,7 @@ describe('useStepCount — iOS', () => {
     mockAHK.isAvailable.mockImplementation((cb) => cb(null, false));
 
     const { result } = renderHook(() => useStepCount());
-    await waitFor(() => {});
+    await waitFor(() => { });
 
     expect(result.current.supported).toBe(false);
   });
@@ -94,7 +96,7 @@ describe('useStepCount — Android', () => {
     mockInit.mockResolvedValue(false);
 
     const { result } = renderHook(() => useStepCount());
-    await waitFor(() => {});
+    await waitFor(() => { });
 
     expect(result.current.supported).toBe(false);
   });

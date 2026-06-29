@@ -1,9 +1,9 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { useTasks } from './useTasks';
-import { useAuth } from '../context/authContext/authContext';
-import * as tasksApi from '../api/tasks/tasks';
-import * as syncQueueModule from '../api/tasks/syncQueue';
-import * as pendingQueue from '../utils/pendingQueue/pendingQueue';
+import { useAuth } from '../../context/authContext/authContext';
+import * as tasksApi from '../../api/tasks/tasks';
+import * as syncQueueModule from '../../api/tasks/syncQueue';
+import * as pendingQueue from '../../utils/pendingQueue/pendingQueue';
 import NetInfo from '@react-native-community/netinfo';
 
 jest.mock('../context/authContext/authContext', () => ({ useAuth: jest.fn() }));
@@ -80,7 +80,7 @@ describe('useTasks', () => {
 
       renderHook(() => useTasks());
 
-      await act(async () => {});
+      await act(async () => { });
       expect(mockFetchTasks).not.toHaveBeenCalled();
     });
 

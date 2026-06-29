@@ -1,10 +1,12 @@
+// Today tab: shows a greeting, an optional step-count card (via HealthKit/Health Connect),
+// and the user's task list for the current day.
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/authContext/authContext';
 import { Task } from '../../types/task';
 import TaskCard from '../../components/TaskCard';
 import { formatToday, getGreeting } from '../../utils/greeting/greeting';
-import { useStepCount } from '../../hooks/useStepCount';
+import { useStepCount } from '../../hooks/useStepCount/useStepCount';
 
 const TAB_BAR_HEIGHT = 80;
 
@@ -19,7 +21,7 @@ export default function TodayScreen({ tasks, onComplete, onEdit, onDelete }: Tod
   const { session } = useAuth();
   const firstName = session?.user.user_metadata?.first_name || 'there';
   const remaining = tasks.filter((t) => !t.completed).length;
-  const { steps, available: stepsAvailable, supported: stepsSupported, requestAccess } = useStepCount();
+  const { steps, permissionStatus, loading, error, requestAndFetch } = useStepCount(); // Only for iOS currently
 
   return (
     <ScrollView
@@ -51,9 +53,9 @@ export default function TodayScreen({ tasks, onComplete, onEdit, onDelete }: Tod
         </Text>
 
         {/* Steps — prompt to enable */}
-        {stepsSupported && !stepsAvailable && (
+        {!steps && (
           <Pressable
-            onPress={requestAccess}
+            onPress={requestAndFetch}
             className="mt-6 flex-row items-center justify-between rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 active:opacity-70">
             <View>
               <Text className="font-jetbrains-mono text-[11px] uppercase tracking-[0.08em] text-outline">
@@ -68,7 +70,7 @@ export default function TodayScreen({ tasks, onComplete, onEdit, onDelete }: Tod
         )}
 
         {/* Steps — count card */}
-        {stepsAvailable && steps !== null && (
+        {steps && steps !== null && (
           <View className="mt-6 rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3">
             <Text className="font-jetbrains-mono text-[11px] uppercase tracking-[0.08em] text-outline">
               Steps Today

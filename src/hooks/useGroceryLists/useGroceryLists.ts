@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { GroceryList } from '../types/grocery';
-import { fetchLists, createList as apiCreateList, deleteList as apiDeleteList } from '../api/grocery/grocery';
-import { useAuth } from '../context/authContext/authContext';
+import { GroceryList } from '@/types/grocery';
+import { fetchLists, createList as apiCreateList, deleteList as apiDeleteList } from '@/api/grocery/grocery';
+import { useAuth } from '@/context/authContext/authContext';
 
 interface UseGroceryListsResult {
   lists: GroceryList[];

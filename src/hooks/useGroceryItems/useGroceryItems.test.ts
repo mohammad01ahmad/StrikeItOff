@@ -1,8 +1,8 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { useGroceryItems } from './useGroceryItems';
-import * as groceryApi from '../api/grocery/grocery';
+import * as groceryApi from '@/api/grocery/grocery';
 
-jest.mock('../api/grocery/grocery', () => ({
+jest.mock('../../api/grocery/grocery', () => ({
   fetchItems: jest.fn(),
   addItem: jest.fn(),
   toggleItem: jest.fn(),
@@ -51,7 +51,7 @@ describe('useGroceryItems', () => {
 
     it('does not fetch when listId is null', async () => {
       const { result } = renderHook(() => useGroceryItems(null));
-      await act(async () => {});
+      await act(async () => { });
       expect(mockFetchItems).not.toHaveBeenCalled();
       expect(result.current.items).toEqual([]);
     });
