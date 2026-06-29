@@ -1,45 +1,55 @@
-import { useEffect, useState } from 'react';
-import AppleHealthKit, { HealthKitPermissions, HealthInputOptions } from 'react-native-health';
+import { HealthKitPermissions, HealthInputOptions } from 'react-native-health';
+import { NativeModules } from 'react-native';
 
-const permissions: HealthKitPermissions = {
-  permissions: {
-    read: [AppleHealthKit.Constants.Permissions.Steps],
-    write: [],
-  },
-};
+// func: Get AppleHK permission
+export const initialiazeHealthKit = (): Promise<boolean> => {
+  const AppleHealthKitNative = NativeModules.AppleHealthKit;
 
-const HealthKitManager = (_date: Date) => {
-  const [hasPermissions, setHasPermissions] = useState(false);
-  const [steps, setSteps] = useState(0);
+  if (!AppleHealthKitNative || typeof AppleHealthKitNative.initHealthKit !== 'function') {
+    console.log('[HealthKit] Native module not found. Are you on a custom dev build?');
+    return Promise.resolve(false);
+  }
 
-  useEffect(() => {
-    AppleHealthKit.initHealthKit(permissions, (err) => {
+  const permissions: HealthKitPermissions = {
+    permissions: {
+      read: [AppleHealthKitNative.Constants?.Permissions?.Steps || 'Steps'],
+      write: [],
+    },
+  };
+
+  return new Promise((resolve) => {
+    AppleHealthKitNative.initHealthKit(permissions, (err: any) => {
       if (err) {
         console.log('Error getting permission', err);
+        resolve(false);
         return;
       }
-      setHasPermissions(true);
+      resolve(true);
     });
-  }, []);
-
-  useEffect(() => {
-    if (!hasPermissions) return;
-
-    const options: HealthInputOptions = {
-      date: new Date().toISOString(),
-      includeManuallyAdded: false,
-    };
-
-    AppleHealthKit.getStepCount(options, (err, results) => {
-      if (err) {
-        console.log('Error fetching steps', err);
-        return;
-      }
-      setSteps(results.value);
-    });
-  }, [hasPermissions]);
-
-  return { hasPermissions, steps };
+  });
 };
 
-export default HealthKitManager;
+// func: Get step Counts
+export const getStepCount = (): Promise<number> => {
+  const AppleHealthKitNative = NativeModules.AppleHealthKit;
+
+  if (!AppleHealthKitNative || !AppleHealthKitNative.getStepCount) {
+    return Promise.resolve(0);
+  }
+
+  const options: HealthInputOptions = {
+    date: new Date().toISOString(),
+    includeManuallyAdded: false,
+  };
+
+  return new Promise((resolve) => {
+    AppleHealthKitNative.getStepCount(options, (err: any, results: any) => {
+      if (err) {
+        console.log('Error fetching steps', err);
+        resolve(0);
+        return;
+      }
+      resolve(results?.value ?? 0);
+    });
+  });
+};

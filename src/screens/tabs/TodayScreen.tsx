@@ -6,7 +6,7 @@ import { useAuth } from '../../context/authContext/authContext';
 import { Task } from '../../types/task';
 import TaskCard from '../../components/TaskCard';
 import { formatToday, getGreeting } from '../../utils/greeting/greeting';
-import HealthKitManager from '@/utils/stepCount/HealthKitManager';
+import { useStepCount } from '../../hooks/useStepCount/useStepCount';
 
 const TAB_BAR_HEIGHT = 80;
 
@@ -21,7 +21,7 @@ export default function TodayScreen({ tasks, onComplete, onEdit, onDelete }: Tod
   const { session } = useAuth();
   const firstName = session?.user.user_metadata?.first_name || 'there';
   const remaining = tasks.filter((t) => !t.completed).length;
-  const { hasPermissions, steps } = HealthKitManager(new Date());
+  // const { steps, hasPermissions, loading, error, connect } = useStepCount();
 
   return (
     <ScrollView
@@ -52,20 +52,25 @@ export default function TodayScreen({ tasks, onComplete, onEdit, onDelete }: Tod
           {getGreeting()}, {firstName}.
         </Text>
 
-        {/* Steps — waiting for HealthKit permission/init */}
+        {/* Steps — tap to enable / Commented for now
         {!hasPermissions && (
-          <View className="mt-6 flex-row items-center justify-between rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3">
+          <Pressable
+            onPress={connect}
+            disabled={loading}
+            className="mt-6 flex-row items-center justify-between rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 active:opacity-70">
             <View>
               <Text className="font-jetbrains-mono text-[11px] uppercase tracking-[0.08em] text-outline">
                 Steps Today
               </Text>
-              <Text className="mt-0.5 font-manrope text-sm text-outline">Connecting to Health…</Text>
+              <Text className="mt-0.5 font-manrope text-sm text-outline">
+                {loading ? 'Connecting…' : error ?? 'Tap to enable step tracking'}
+              </Text>
             </View>
             <Feather name="activity" size={18} color="#cfc4bd" />
-          </View>
+          </Pressable>
         )}
 
-        {/* Steps — count card (granted) */}
+        Steps — count card (granted)
         {hasPermissions && (
           <View className="mt-6 rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3">
             <Text className="font-jetbrains-mono text-[11px] uppercase tracking-[0.08em] text-outline">
@@ -75,7 +80,7 @@ export default function TodayScreen({ tasks, onComplete, onEdit, onDelete }: Tod
               {steps.toLocaleString()}
             </Text>
           </View>
-        )}
+        )} */}
 
         {/* Section heading + count */}
         <View className="mb-5 mt-10 flex-row items-baseline justify-between">

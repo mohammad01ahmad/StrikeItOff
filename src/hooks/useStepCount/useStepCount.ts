@@ -1,54 +1,49 @@
 import { useState, useEffect } from 'react';
-import HealthKitManager from '@/utils/stepCount/HealthKitManager';
-import { PermissionStatus } from '@/types/stepCount';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { initialiazeHealthKit, getStepCount } from '@/utils/stepCount/HealthKitManager';
+
+const HK_GRANTED_KEY = '@strikeitoff:hk_granted';
 
 export function useStepCount() {
   const [steps, setSteps] = useState<number>(0);
-  const [permissionStatus, setPermissionStatus] = useState<PermissionStatus>('idle');
+  const [hasPermissions, setHasPermissions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Silently mark unavailable on non-iOS devices; no sheet, no fetch.
+  // On mount: if user already granted before, skip the tap and fetch directly.
   useEffect(() => {
-    if (!HealthKitManager.isAvailable()) {
-      setPermissionStatus('unavailable');
-    }
+    AsyncStorage.getItem(HK_GRANTED_KEY).then((val) => {
+      if (val !== 'true') return;
+      setLoading(true);
+      getStepCount()
+        .then((count) => {
+          setSteps(count);
+          setHasPermissions(true);
+        })
+        .finally(() => setLoading(false));
+    });
   }, []);
 
-  // Triggered by user tap. Flow: auth status (informational) → init → fetch.
-  const requestAndFetch = async () => {
-
-    console.log('[1] Button pressed')
-    if (!HealthKitManager.isAvailable()) {
-      console.log('[2] HKM unavailable')
-      setPermissionStatus('unavailable');
-      return;
-    }
-    console.log('[2] HKM available')
-
+  // Tap-triggered: init HealthKit (shows permission sheet on first call only),
+  // then fetch steps. Persists the grant so future mounts auto-fetch.
+  const connect = async () => {
     setLoading(true);
     setError(null);
 
-    try {
-      // Informational only — iOS read-auth is always "authorized", so we don't
-      // gate on this; we just record it.
-      await HealthKitManager.getAuthStatus();
-      console.log('[3] Auth available')
+    const granted = await initialiazeHealthKit();
+    setHasPermissions(granted);
 
-      // initHealthKit shows the permission sheet on first call; silent on subsequent.
-      await HealthKitManager.requestPermissions();
-      setPermissionStatus('granted');
-      console.log('[4] Permission granted')
-
-      const count = await HealthKitManager.getTodayStepCount();
-      setSteps(count);
-    } catch (e: unknown) {
-      setPermissionStatus('denied');
-      setError(e instanceof Error ? e.message : 'Unknown error');
-    } finally {
+    if (!granted) {
+      setError('Allow Apple Health access to see your step count');
       setLoading(false);
+      return;
     }
+
+    await AsyncStorage.setItem(HK_GRANTED_KEY, 'true');
+    const count = await getStepCount();
+    setSteps(count);
+    setLoading(false);
   };
 
-  return { steps, permissionStatus, loading, error, requestAndFetch };
+  return { steps, hasPermissions, loading, error, connect };
 }
